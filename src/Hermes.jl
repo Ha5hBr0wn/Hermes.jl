@@ -321,9 +321,10 @@ struct ReplaySingleFeed{T <: TardisDataType}
     to::Date
 end
 
-struct ReplaySingleFeedState{T <: TardisDataType}
-    current_loader::TardisLoader{T}
-    current_file::CSV.File
+mutable struct ReplaySingleFeedState{T <: TardisDataType}
+    const current_loader::TardisLoader{T}
+    const current_date::Date
+    const current_file::CSV.File
     current_line::Int64
 end
 
@@ -340,24 +341,24 @@ Base.iterate(iter::ReplaySingleFeed{T}) where T <: TardisDataType = begin
     )
 
     current_loader = loader
+    current_date = loader_date(loader)
     current_file = CSV.File(fetch_resource(loader); types=type_list(T))
     current_line = 1
 
     if current_line > length(current_file)
         iterate(@set iter.from += Day(1))
     else
-        convert(T, current_file[current_line]), ReplaySingleFeedState(current_loader, current_file, current_line + 1)
+        convert(T, current_file[current_line]), ReplaySingleFeedState(current_loader, current_date, current_file, current_line + 1)
     end
 end
 
 Base.iterate(iter::ReplaySingleFeed{T}, state::ReplaySingleFeedState{T}) where T <: TardisDataType = begin
-    current_date = loader_date(state.current_loader)
-    if iter.to - current_date == Day(1) && state.current_line > length(state.current_file)
+    if state.current_line > length(state.current_file) && iter.to - state.current_date == Day(1)
         return nothing
     end
 
     if state.current_line > length(state.current_file)
-        next_date = current_date + Day(1)
+        next_date = state.current_date + Day(1)
         next_loader = TardisLoader{T}(
             state.current_loader,
             Dates.year(next_date), 
@@ -366,9 +367,9 @@ Base.iterate(iter::ReplaySingleFeed{T}, state::ReplaySingleFeedState{T}) where T
         )
         next_file = CSV.File(fetch_resource(next_loader); types=type_list(T))
         next_line = 1
-        iterate(iter, ReplaySingleFeedState(next_loader, next_file, next_line))
+        iterate(iter, ReplaySingleFeedState(next_loader, next_date, next_file, next_line))
     else
-        convert(T, state.current_file[state.current_line]), @set state.current_line += 1
+        convert(T, state.current_file[state.current_line]), (state.current_line += 1; state)
     end
 end
 
