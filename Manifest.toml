@@ -137,7 +137,7 @@ version = "0.21.3"
 
 [[deps.Kibisis]]
 deps = ["Test"]
-git-tree-sha1 = "4499f99c621cd6556c2a28760ef019ff546e7b36"
+git-tree-sha1 = "1d084c67a153ffaaebca606eab5866cef1ab5533"
 repo-rev = "master"
 repo-url = "https://github.com/Ha5hBr0wn/Kibisis.jl"
 uuid = "b7c0a452-59f3-4788-8baf-51dfb4e989a2"

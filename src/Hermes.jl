@@ -206,17 +206,15 @@ end
 
 
 ##################### cache utilities #######################
-const MetadataType = Tuple{Vector{UInt8}}
-
-Kibisis.item_size(x::TardisCacheItem, ::MetadataType) = begin
+Kibisis.item_size(x::TardisCacheItem, ::Vector{UInt8}) = begin
     (x.file_name |> filesize) / 1e9
 end
 
-Kibisis.on_pop(item::TardisCacheItem, ::MetadataType) = begin
+Kibisis.on_pop(item::TardisCacheItem, ::Vector{UInt8}) = begin
     item.file_name |> rm
 end
 
-Kibisis.on_new_push(item::TardisCacheItem, (body,)::MetadataType) = begin
+Kibisis.on_new_push(item::TardisCacheItem, body::Vector{UInt8}) = begin
     open(item.file_name, "w") do io
         write(io, body)
     end
