@@ -23,7 +23,7 @@ const cache_size_gb = parse(Float64, ENV["HERMES_CACHE_SIZE_GB"])
 ######################### tardis sides #####################
 @enum Side::UInt8 bid ask unknown
 
-Base.convert(::Type{T}, s::Side) where T <: Number = begin
+@inline Base.convert(::Type{T}, s::Side) where T <: Number = begin
     if s === bid
         T(1)
     elseif s === ask
@@ -33,7 +33,7 @@ Base.convert(::Type{T}, s::Side) where T <: Number = begin
     end
 end
 
-Base.convert(::Type{Side}, s::AbstractString) = begin
+@inline Base.convert(::Type{Side}, s::AbstractString) = begin
     if s == "bid"
         bid
     elseif s == "ask"
@@ -50,7 +50,7 @@ end
 ######################### tardis exchanges #########################
 @enum Exchange::UInt8 FTX Deribit
 
-Base.convert(::Type{Exchange}, s::AbstractString) = begin
+@inline Base.convert(::Type{Exchange}, s::AbstractString) = begin
     if s == "ftx"
         FTX
     elseif s == "deribit"
@@ -64,7 +64,7 @@ end
 ######################## tardis symbols #########################
 @enum Contract::UInt8 BTCPERP ETHPERP
 
-Base.convert(::Type{Contract}, s::AbstractString) = begin
+@inline Base.convert(::Type{Contract}, s::AbstractString) = begin
     if s == "BTC-PERP"
         BTCPERP
     elseif s == "ETH-PERP"
@@ -111,7 +111,7 @@ end
 
 const TardisDataType = Union{IncrementalBookL2, Trade, Liquidation}
 
-Base.convert(::Type{IncrementalBookL2}, row::CSV.Row) = begin
+@inline Base.convert(::Type{IncrementalBookL2}, row::CSV.Row) = begin
     IncrementalBookL2(
         row.exchange::String, 
         row.symbol::String, 
@@ -126,7 +126,7 @@ end
 
 type_list(::Type{IncrementalBookL2}) = [String, String, Int64, Int64, Bool, String, Float64, Float64]
 
-Base.convert(::Type{Trade}, row::CSV.Row) = begin
+@inline Base.convert(::Type{Trade}, row::CSV.Row) = begin
     Trade(
         row.exchange::String, 
         row.symbol::String, 
@@ -141,7 +141,7 @@ end
 
 type_list(::Type{Trade}) = [String, String, Int64, Int64, String, String, Float64, Float64]
 
-Base.convert(::Type{Liquidation}, row::CSV.Row) = begin
+@inline Base.convert(::Type{Liquidation}, row::CSV.Row) = begin
     Liquidation(
         row.exchange::String, 
         row.symbol::String, 
