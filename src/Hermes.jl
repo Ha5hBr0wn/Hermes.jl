@@ -113,42 +113,48 @@ const TardisDataType = Union{IncrementalBookL2, Trade, Liquidation}
 
 Base.convert(::Type{IncrementalBookL2}, row::CSV.Row) = begin
     IncrementalBookL2(
-        row.exchange,
-        row.symbol, 
-        row.timestamp, 
-        row.local_timestamp, 
-        row.is_snapshot, 
-        row.side, 
-        row.price, 
-        row.amount
+        row.exchange::String, 
+        row.symbol::String, 
+        row.timestamp::Int64, 
+        row.local_timestamp::Int64, 
+        row.is_snapshot::Bool, 
+        row.side::String, 
+        row.price::Float64, 
+        row.amount::Float64
     )
 end
+
+type_list(::Type{IncrementalBookL2}) = [String, String, Int64, Int64, Bool, String, Float64, Float64]
 
 Base.convert(::Type{Trade}, row::CSV.Row) = begin
     Trade(
-        row.exchange, 
-        row.symbol, 
-        row.timestamp, 
-        row.local_timestamp, 
-        row.id, 
-        row.side, 
-        row.price, 
-        row.amount
+        row.exchange::String, 
+        row.symbol::String, 
+        row.timestamp::Int64, 
+        row.local_timestamp::Int64, 
+        row.id::String, 
+        row.side::String, 
+        row.price::Float64, 
+        row.amount::Float64
     )
 end
 
+type_list(::Type{Trade}) = [String, String, Int64, Int64, String, String, Float64, Float64]
+
 Base.convert(::Type{Liquidation}, row::CSV.Row) = begin
     Liquidation(
-        row.exchange, 
-        row.symbol, 
-        row.timestamp, 
-        row.local_timestamp, 
-        row.id, 
-        row.side, 
-        row.price, 
-        row.amount
+        row.exchange::String, 
+        row.symbol::String, 
+        row.timestamp::Int64, 
+        row.local_timestamp::Int64, 
+        row.id::String, 
+        row.side::String, 
+        row.price::Float64, 
+        row.amount::Float64
     )
 end
+
+type_list(::Type{Liquidation}) = [String, String, Int64, Int64, String, String, Float64, Float64]
 
 
 ########################### types for loading data ############################
@@ -160,20 +166,19 @@ end
 
 struct TardisCache
     dir::String
-    size_gb::Int64
+    size_gb::Int16
     lru::Kibisis.LRUSet{TardisCacheItem}
 end
 
-struct TardisLoader
+struct TardisLoader{T <: TardisDataType}
     cache::TardisCache
     exchange::Exchange
-    data_type::Type{T} where T <: TardisDataType
-    year::Int64
-    month::Int64
-    day::Int64
+    year::Int16
+    month::Int8
+    day::Int8
     contract::Contract
 
-    TardisLoader(exchange, data_type, year, month, day, contract) = begin
+    TardisLoader{T}(exchange, year, month, day, contract) where T <: TardisDataType = begin
         cache_file_name = cache_root * "/cache.jls"
         if !isfile(cache_file_name)
             lru = Kibisis.LRUSet{TardisCacheItem}(cache_size_gb)
@@ -183,7 +188,6 @@ struct TardisLoader
         new(
             TardisCache(cache_root, cache_size_gb, Serialization.deserialize(cache_file_name)), 
             exchange, 
-            data_type, 
             year, 
             month,
             day, 
@@ -191,11 +195,10 @@ struct TardisLoader
         )
     end
 
-    TardisLoader(loader::TardisLoader, year, month, day) = begin
+    TardisLoader{T}(loader::TardisLoader{T}, year, month, day) where T <: TardisDataType = begin
         new(
             loader.cache, 
             loader.exchange, 
-            loader.data_type, 
             year, 
             month, 
             day, 
@@ -232,11 +235,11 @@ end
 
 
 ##################### resource path creation ##################
-create_resource_path(loader::TardisLoader, ::Val{remote}) = begin
+create_resource_path(loader::TardisLoader{T}, ::Val{remote}) where T <: TardisDataType = begin
     path_components = [
         base_api_endpoint,
         create_resource_path(Val(loader.exchange)),
-        create_resource_path(loader.data_type), 
+        create_resource_path(T), 
         create_resource_path(loader.year, loader.month, loader.day, Val(remote)), 
         create_resource_path(Val(loader.contract)) * ".csv.gz"
     ]
@@ -244,11 +247,11 @@ create_resource_path(loader::TardisLoader, ::Val{remote}) = begin
     join(path_components, '/')
 end
 
-create_resource_path(loader::TardisLoader, ::Val{cached}) = begin
+create_resource_path(loader::TardisLoader{T}, ::Val{cached}) where T <: TardisDataType = begin
     path_components = [
         create_resource_path(Val(loader.exchange)), 
         create_resource_path(Val(loader.contract)), 
-        create_resource_path(loader.data_type), 
+        create_resource_path(T), 
         create_resource_path(loader.year, loader.month, loader.day, Val(cached)) * ".csv.gz"
     ]
 
@@ -311,27 +314,25 @@ end
 
 
 ####################### higher level replay ##################
-struct ReplaySingleFeed
+struct ReplaySingleFeed{T <: TardisDataType}
     exchange::Exchange
-    data_type::Type{T} where T <: TardisDataType
     contract::Contract
     from::Date
     to::Date
 end
 
-struct ReplaySingleFeedState
-    current_loader::TardisLoader
+struct ReplaySingleFeedState{T <: TardisDataType}
+    current_loader::TardisLoader{T}
     current_file::CSV.File
     current_line::Int64
 end
 
 loader_date(loader::TardisLoader) = Date(loader.year, loader.month, loader.day)
 
-Base.iterate(iter::ReplaySingleFeed) = begin
+Base.iterate(iter::ReplaySingleFeed{T}) where T <: TardisDataType = begin
     iter.to - iter.from >= Day(1) || return nothing
-    loader = TardisLoader(
+    loader = TardisLoader{T}(
         iter.exchange, 
-        iter.data_type, 
         Dates.year(iter.from), 
         Dates.month(iter.from), 
         Dates.day(iter.from), 
@@ -339,17 +340,17 @@ Base.iterate(iter::ReplaySingleFeed) = begin
     )
 
     current_loader = loader
-    current_file = CSV.File(fetch_resource(loader))
+    current_file = CSV.File(fetch_resource(loader); types=type_list(T))
     current_line = 1
 
     if current_line > length(current_file)
         iterate(@set iter.from += Day(1))
     else
-        convert(iter.data_type, current_file[current_line]), ReplaySingleFeedState(current_loader, current_file, current_line + 1)
+        convert(T, current_file[current_line]), ReplaySingleFeedState(current_loader, current_file, current_line + 1)
     end
 end
 
-Base.iterate(iter::ReplaySingleFeed, state::ReplaySingleFeedState) = begin
+Base.iterate(iter::ReplaySingleFeed{T}, state::ReplaySingleFeedState{T}) where T <: TardisDataType = begin
     current_date = loader_date(state.current_loader)
     if iter.to - current_date == Day(1) && state.current_line > length(state.current_file)
         return nothing
@@ -357,17 +358,17 @@ Base.iterate(iter::ReplaySingleFeed, state::ReplaySingleFeedState) = begin
 
     if state.current_line > length(state.current_file)
         next_date = current_date + Day(1)
-        next_loader = TardisLoader(
+        next_loader = TardisLoader{T}(
             state.current_loader,
             Dates.year(next_date), 
             Dates.month(next_date), 
             Dates.day(next_date)
         )
-        next_file = CSV.File(fetch_resource(next_loader))
+        next_file = CSV.File(fetch_resource(next_loader); types=type_list(T))
         next_line = 1
         iterate(iter, ReplaySingleFeedState(next_loader, next_file, next_line))
     else
-        convert(iter.data_type, state.current_file[state.current_line]), @set state.current_line += 1
+        convert(T, state.current_file[state.current_line]), @set state.current_line += 1
     end
 end
 
