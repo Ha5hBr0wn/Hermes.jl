@@ -2,7 +2,7 @@
 
 julia_version = "1.8.2"
 manifest_format = "2.0"
-project_hash = "c398d13106bbfb300f45203eaf7a7ea28c965fcd"
+project_hash = "7392951eef66654a5a5ee1b02ae048b49774416a"
 
 [[deps.Accessors]]
 deps = ["Compat", "CompositionsBase", "ConstructionBase", "Dates", "InverseFunctions", "LinearAlgebra", "MacroTools", "Requires", "Test"]
@@ -27,9 +27,9 @@ version = "0.1.5"
 
 [[deps.CSV]]
 deps = ["CodecZlib", "Dates", "FilePathsBase", "InlineStrings", "Mmap", "Parsers", "PooledArrays", "SentinelArrays", "SnoopPrecompile", "Tables", "Unicode", "WeakRefStrings"]
-git-tree-sha1 = "d1b3d33f3d15e382cf92bff7cf4b2814330392a0"
+git-tree-sha1 = "76c8d77a76c564bbc39ae351c075ef3cafceef83"
 uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-version = "0.10.5"
+version = "0.10.6"
 
 [[deps.CodecZlib]]
 deps = ["TranscodingStreams", "Zlib_jll"]
@@ -137,7 +137,7 @@ version = "0.21.3"
 
 [[deps.Kibisis]]
 deps = ["Test"]
-git-tree-sha1 = "2d9fabe09bcb50c77f67f024f58bbbf558af047e"
+git-tree-sha1 = "4499f99c621cd6556c2a28760ef019ff546e7b36"
 repo-rev = "master"
 repo-url = "https://github.com/Ha5hBr0wn/Kibisis.jl"
 uuid = "b7c0a452-59f3-4788-8baf-51dfb4e989a2"
@@ -190,9 +190,9 @@ uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[deps.MbedTLS]]
 deps = ["Dates", "MbedTLS_jll", "MozillaCACerts_jll", "Random", "Sockets"]
-git-tree-sha1 = "6872f9594ff273da6d13c7c1a1545d5a8c7d0c1c"
+git-tree-sha1 = "03a9b9718f5682ecb107ac9f7308991db4ce395b"
 uuid = "739be429-bea8-5141-9913-cc70e7f3736d"
-version = "1.1.6"
+version = "1.1.7"
 
 [[deps.MbedTLS_jll]]
 deps = ["Artifacts", "Libdl"]
