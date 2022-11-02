@@ -1,6 +1,6 @@
 using Hermes: ReplaySingleFeed, IncrementalBookL2, Trade, FTX, BTCPERP, TardisDataType
 using Dates
-using MergedIterators: MergedIterators, @merge_and_process, rank_key, IteratorProcess, MergedIterator
+using MergedIterators: MergedIterators, @merge_and_process, IteratorProcess
 
 mutable struct SumAmounts <: IteratorProcess
     s::Float64
@@ -9,8 +9,6 @@ end
 (s::SumAmounts)(x::TardisDataType) = begin
     s.s += x.amount
 end
-
-MergedIterators.rank_key(x::TardisDataType) = x.amount
 
 test_hermes(from, to) = begin
     iter1 = ReplaySingleFeed{IncrementalBookL2}(
