@@ -1,12 +1,19 @@
-using Hermes: ReplaySingleFeed, IncrementalBookL2, Trade, FTX, BTCPERP
+using Hermes: ReplaySingleFeed, IncrementalBookL2, Trade, FTX, BTCPERP, TardisDataType
 using Dates
-using CSV
-using ProfileView
-using MergedIterators: MergedIterator, SingleIterator
-using BenchmarkTools
+using MergedIterators: MergedIterators, @merge_and_process, rank_key, IteratorProcess, MergedIterator
+
+mutable struct SumAmounts <: IteratorProcess
+    s::Float64
+end
+
+(s::SumAmounts)(x::TardisDataType) = begin
+    s.s += x.amount
+end
+
+MergedIterators.rank_key(x::TardisDataType) = x.amount
 
 test_hermes(from, to) = begin
-    iter = ReplaySingleFeed{IncrementalBookL2}(
+    iter1 = ReplaySingleFeed{IncrementalBookL2}(
         FTX, 
         BTCPERP, 
         from, 
@@ -16,19 +23,13 @@ test_hermes(from, to) = begin
     iter2 = ReplaySingleFeed{Trade}(
         FTX, 
         BTCPERP, 
-        from,
+        from, 
         to
     )
+    
+    # s = 0.0
 
-    merged_iter = MergedIterator(iter, iter2)
-
-    s::Float64 = 0.0
-
-    for data in merged_iter
-        s += data.amount
-    end
-
-    # for data in iter
+    # for data in iter1
     #     s += data.amount
     # end
 
@@ -36,7 +37,23 @@ test_hermes(from, to) = begin
     #     s += data.amount
     # end
 
-    println(s)
+    # println(s)
+
+    sum_process = SumAmounts(0.0)
+
+    @merge_and_process sum_process iter1 iter2
+
+    println(sum_process.s)
+
+    # miter = MergedIterator(iter1, iter2)
+
+    # s = 0.0
+
+    # for data in miter
+    #     s += data.amount
+    # end
+
+    # println(s)
 end
 
 @time test_hermes(Date(2022, 10, 14), Date(2022, 10, 16))
