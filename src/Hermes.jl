@@ -2,9 +2,7 @@ module Hermes
 
 ########################### using statements ############################
 using HTTP
-using JSON
 using CSV
-using Accessors
 using Dates
 using Kibisis
 using MergedIterators
@@ -125,7 +123,7 @@ const TardisDataType = Union{IncrementalBookL2, Trade, Liquidation}
     )
 end
 
-type_list(::Type{IncrementalBookL2}) = [String, String, Int64, Int64, Bool, String, Float64, Float64]
+@inline type_list(::Type{IncrementalBookL2}) = [String, String, Int64, Int64, Bool, String, Float64, Float64]
 
 @inline Base.convert(::Type{Trade}, row::CSV.Row) = begin
     Trade(
@@ -140,7 +138,7 @@ type_list(::Type{IncrementalBookL2}) = [String, String, Int64, Int64, Bool, Stri
     )
 end
 
-type_list(::Type{Trade}) = [String, String, Int64, Int64, String, String, Float64, Float64]
+@inline type_list(::Type{Trade}) = [String, String, Int64, Int64, String, String, Float64, Float64]
 
 @inline Base.convert(::Type{Liquidation}, row::CSV.Row) = begin
     Liquidation(
@@ -155,7 +153,7 @@ type_list(::Type{Trade}) = [String, String, Int64, Int64, String, String, Float6
     )
 end
 
-type_list(::Type{Liquidation}) = [String, String, Int64, Int64, String, String, Float64, Float64]
+@inline type_list(::Type{Liquidation}) = [String, String, Int64, Int64, String, String, Float64, Float64]
 
 
 ########################### types for loading data ############################
@@ -330,6 +328,7 @@ mutable struct ReplaySingleFeedState{T <: TardisDataType}
 end
 
 loader_date(loader::TardisLoader) = Date(loader.year, loader.month, loader.day)
+add_one_to_from_date(x::ReplaySingleFeed{T}) where T = ReplaySingleFeed{T}(x.exchange, x.contract, x.from + Day(1), x.to)
 
 Base.iterate(iter::ReplaySingleFeed{T}) where T <: TardisDataType = begin
     iter.to - iter.from >= Day(1) || return nothing
@@ -347,7 +346,7 @@ Base.iterate(iter::ReplaySingleFeed{T}) where T <: TardisDataType = begin
     current_line = 1
 
     if current_line > length(current_file)
-        iterate(@set iter.from += Day(1))
+        iterate(add_one_to_from_date(iter))
     else
         convert(T, current_file[current_line]), ReplaySingleFeedState(current_loader, current_date, current_file, current_line + 1)
     end
