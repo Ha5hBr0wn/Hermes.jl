@@ -391,7 +391,7 @@ MergedIterators.MergedIterator(iters::Vararg{ReplaySingleFeed}) = begin
     )
 end
 
-MergedIterators.@custom_generic_lt Base.Order.lt(::LocalTimestampOrdering, a::TardisDataType, b::TardisDataType) = begin
+MergedIterators.@custom_lt Base.Order.lt(::LocalTimestampOrdering, a::TardisDataType, b::TardisDataType) = begin
     a.local_timestamp < b.local_timestamp
 end
 
