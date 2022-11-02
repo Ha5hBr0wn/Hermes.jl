@@ -374,24 +374,6 @@ Base.iterate(iter::ReplaySingleFeed{T}, state::ReplaySingleFeedState{T}) where T
 end
 
 ##################### helpers for merging iterators ########################
-MergedIterators.SingleIterator(iter::ReplaySingleFeed{T}) where T = begin
-    MergedIterators.SingleIterator{
-        ReplaySingleFeed{T}, 
-        T, 
-        ReplaySingleFeedState{T}
-    }(iter)
-end
-
-struct LocalTimestampOrdering <: Base.Order.Ordering end
-
-MergedIterators.MergedIterator(iters::Vararg{ReplaySingleFeed}) = begin
-    MergedIterators.MergedIterator(
-        LocalTimestampOrdering(), map(MergedIterators.SingleIterator, iters)...
-    )
-end
-
-MergedIterators.@custom_lt Base.Order.lt(::LocalTimestampOrdering, a::TardisDataType, b::TardisDataType) = begin
-    a.local_timestamp < b.local_timestamp
-end
+MergedIterators.rank_key(x::TardisDataType) = x.local_timestamp
 
 end
