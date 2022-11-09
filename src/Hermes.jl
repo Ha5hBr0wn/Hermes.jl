@@ -175,34 +175,34 @@ struct TardisLoader{T <: TardisDataType}
     month::Int8
     day::Int8
     contract::Contract
+end
 
-    TardisLoader{T}(exchange, year, month, day, contract) where T <: TardisDataType = begin
-        cache_file_name = cache_root * "/cache.jls"
-        if !isfile(cache_file_name)
-            lru = Kibisis.LRUSet{TardisCacheItem}(cache_size_gb)
-            Serialization.serialize(cache_file_name, lru)
-        end
-        
-        new(
-            TardisCache(cache_root, Serialization.deserialize(cache_file_name)), 
-            exchange, 
-            year, 
-            month,
-            day, 
-            contract
-        )
+TardisLoader(::Type{T}, exchange, year, month, day, contract) where T <: TardisDataType = begin
+    cache_file_name = cache_root * "/cache.jls"
+    if !isfile(cache_file_name)
+        lru = Kibisis.LRUSet{TardisCacheItem}(cache_size_gb)
+        Serialization.serialize(cache_file_name, lru)
     end
+    
+    TardisLoader{T}(
+        TardisCache(cache_root, Serialization.deserialize(cache_file_name)), 
+        exchange, 
+        year, 
+        month,
+        day, 
+        contract
+    )
+end
 
-    TardisLoader{T}(loader::TardisLoader{T}, year, month, day) where T <: TardisDataType = begin
-        new(
-            loader.cache, 
-            loader.exchange, 
-            year, 
-            month, 
-            day, 
-            loader.contract
-        )
-    end
+TardisLoader(loader::TardisLoader{T}, year, month, day) where T <: TardisDataType = begin
+    TardisLoader{T}(
+        loader.cache, 
+        loader.exchange, 
+        year, 
+        month, 
+        day, 
+        loader.contract
+    )
 end
 
 
@@ -331,7 +331,8 @@ add_one_to_from_date(x::ReplaySingleFeed{T}) where T = ReplaySingleFeed{T}(x.exc
 
 Base.iterate(iter::ReplaySingleFeed{T}) where T <: TardisDataType = begin
     iter.to - iter.from >= Day(1) || return nothing
-    loader = TardisLoader{T}(
+    loader = TardisLoader(
+        T,
         iter.exchange, 
         Dates.year(iter.from), 
         Dates.month(iter.from), 
@@ -358,7 +359,7 @@ Base.iterate(iter::ReplaySingleFeed{T}, state::ReplaySingleFeedState{T}) where T
 
     if state.current_line > length(state.current_file)
         next_date = state.current_date + Day(1)
-        next_loader = TardisLoader{T}(
+        next_loader = TardisLoader(
             state.current_loader,
             Dates.year(next_date), 
             Dates.month(next_date), 
