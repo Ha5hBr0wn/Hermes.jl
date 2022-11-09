@@ -25,33 +25,12 @@ test_hermes(from, to) = begin
         to
     )
     
-    # s = 0.0
-
-    # for data in iter1
-    #     s += data.amount
-    # end
-
-    # for data in iter2
-    #     s += data.amount
-    # end
-
-    # println(s)
-
     sum_process = SumAmounts(0.0)
 
     @merge_and_process sum_process iter1 iter2
 
     println(sum_process.s)
 
-    # miter = MergedIterator(iter1, iter2)
-
-    # s = 0.0
-
-    # for data in miter
-    #     s += data.amount
-    # end
-
-    # println(s)
 end
 
 @time test_hermes(Date(2022, 10, 14), Date(2022, 10, 16))

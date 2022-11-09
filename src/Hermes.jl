@@ -165,7 +165,6 @@ end
 
 struct TardisCache
     dir::String
-    size_gb::Int16
     lru::Kibisis.LRUSet{TardisCacheItem}
 end
 
@@ -185,7 +184,7 @@ struct TardisLoader{T <: TardisDataType}
         end
         
         new(
-            TardisCache(cache_root, cache_size_gb, Serialization.deserialize(cache_file_name)), 
+            TardisCache(cache_root, Serialization.deserialize(cache_file_name)), 
             exchange, 
             year, 
             month,
@@ -208,7 +207,7 @@ end
 
 
 ##################### cache utilities #######################
-Kibisis.item_size(x::TardisCacheItem, ::Vector{UInt8}) = begin
+Kibisis.item_size(x::TardisCacheItem) = begin
     (x.file_name |> filesize) / 1e9
 end
 
